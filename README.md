@@ -5,6 +5,6 @@ Tested in FreeBSD.
 
 `make` to build.
 
-`./man` to run
+`./main` to run
 
 
