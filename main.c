@@ -4,57 +4,56 @@
 #include"geo.h"
 #include"xlib.h"
 
+#define SPHERE 1
+#define TORUS 2
+#define SURFACE 3
+
 Display *display;
 Window window;
 XdbeBackBuffer back_buffer;
 GC gc;
 XEvent event;
 
+// Sphere
+double sphere_radius = 100;
+int sphere_npar = 20;
+int sphere_nmer = 10;
+double sphere_rot_y = 0;
+
 // Torus
-#define RADIUS 100
-#define THICKNESS 40
-#define PAR 50
-#define MER 50
+double torus_radius = 100;
+double torus_thickness = 40;
+int torus_npar = 20;
+int torus_nmer = 10;
+double torus_rot_y = 0;
 
 // Surface
-#define WIDTH 300
-#define HEIGHT 300
-#define COLUMNS 60
-#define ROWS 60
-#define ORIGIN_X 0
-#define ORIGIN_Y 0
-#define SCALE_H 10
-#define SCALE_L 50
+double surface_width = 300;
+double surface_height = 300;
+int surface_columns = 60;
+int surface_rows = 60;
+double surface_origin_x = 0;
+double surface_origin_y = 0;
+double surface_phase = 0;
+double surface_scale_h = 10;
+double surface_scale_l = 50;
 
-void draw_sphere(double r, int npar, int nmer, double rot_y) {
-  int nsegs = sphere_nsegs(npar, nmer);
-  Segment *segs = sphere(r, npar, nmer);
-  segs_rot_y(segs, nsegs, rot_y);
-  segs_rot_x(segs, nsegs, 0.8);
-  draw_segs(display, back_buffer, gc, segs, nsegs);
-}
-
-void draw_torus(double r, double t, int npar, int nmer, double rot_y) {
-  int nsegs = torus_nsegs(npar, nmer);
-  Segment *segs = torus(r, t, npar, nmer);
-  segs_rot_y(segs, nsegs, rot_y);
-  segs_rot_x(segs, nsegs, 0);
-  draw_segs(display, back_buffer, gc, segs, nsegs);
-}
-
-void draw_surface(double width,
-		  double height,
-		  int columns,
-		  int rows,
-		  double origin_x,
-		  double origin_y,
-		  double phase,
-		  double scale_h,
-		  double scale_l) {
-  int nsegs = surface_nsegs(columns, rows);
-  Segment *segs = surface(width, height, columns, rows, origin_x, origin_y, phase, scale_h, scale_l);
-  segs_rot_x(segs, nsegs, 0.8);
-  draw_segs(display, back_buffer, gc, segs, nsegs);
+void draw(int state) {
+  switch (state) {
+  case SPHERE:
+    draw_sphere(display, back_buffer, gc,
+		sphere_radius, sphere_npar, sphere_nmer, sphere_rot_y);
+    break;
+  case TORUS:
+    draw_torus(display, back_buffer, gc,
+	       torus_radius, torus_thickness, torus_npar, torus_nmer, torus_rot_y);
+    break;
+  case SURFACE:
+    draw_surface(display, back_buffer, gc,
+		 surface_width, surface_height, surface_columns, surface_rows,
+		 surface_origin_x, surface_origin_y, surface_phase, surface_scale_h, surface_scale_l);
+    break;
+  }
 }
 
 int main() {
@@ -70,23 +69,25 @@ int main() {
 
   XSetForeground(display, gc, BlackPixel(display, 0));
 
-  for(;;) {
-    XNextEvent(display, &event);
-    if (event.type == MapNotify)
-      break;
-  }
+  /* for(;;) { */
+  /*   XNextEvent(display, &event); */
+  /*   if (event.type == MapNotify) */
+  /*     break; */
+  /* } */
 
+  int state = SURFACE;
   double ty = 0;
   for(;;) {
     XSetForeground(display, gc, WhitePixel(display, 0));
-    //draw_sphere(RADIUS, PAR, MER, ty);
-    //draw_torus(RADIUS, THICKNESS, PAR, MER, ty);
-    draw_surface(WIDTH, HEIGHT, COLUMNS, ROWS, ORIGIN_X, ORIGIN_Y, ty, SCALE_H, SCALE_L);
-    ty = ty - 0.1;
+    draw(state);
+
+    ty = ty + 0.01;
+    sphere_rot_y = ty;
+    torus_rot_y = ty;
+    surface_phase = ty;
+
     XSetForeground(display, gc, BlackPixel(display, 0));
-    //draw_sphere(RADIUS, PAR, MER, ty);
-    //draw_torus(RADIUS, THICKNESS, PAR, MER, ty);
-    draw_surface(WIDTH, HEIGHT, COLUMNS, ROWS, ORIGIN_X, ORIGIN_Y, ty, SCALE_H, SCALE_L);
+    draw(state);
 
     XdbeSwapInfo swap_info;
     swap_info.swap_window = window;
