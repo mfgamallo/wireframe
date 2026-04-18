@@ -230,7 +230,7 @@ Segment *point_torus_to_segments(Point *torus, int npar, int nmer) {
 }
 
 Segment *point_surface_to_segments(Point *surface, int columns, int rows) {
-  Segment *segs = (Segment *)malloc(sizeof(Segment) * (columns -1) * rows * 2);
+  Segment *segs = (Segment *)malloc(sizeof(Segment) * columns * rows * 2 - columns - rows);
 
   int p = 0;
   for (int row = 0; row < rows - 1; row++) {
@@ -286,5 +286,5 @@ int torus_nsegs(int npar, int nmer) {
 }
 
 int surface_nsegs(int columns, int rows) {
-  return (columns -1) * rows * 2;
+  return columns * rows * 2 - columns - rows;
 }
