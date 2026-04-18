@@ -159,8 +159,8 @@ Point *point_surface(double width,
 		     ) {
   Point *ps = (Point *)malloc(sizeof(Point) * columns * rows);
 
-  double delta_x = width / columns;
-  double delta_y = height / rows;
+  double delta_x = width / (columns - 1);
+  double delta_y = height / (rows - 1);
   for (int j = 0; j < rows; j++) {
     for (int i = 0; i < columns; i++) {
       int index = j * columns + i;
