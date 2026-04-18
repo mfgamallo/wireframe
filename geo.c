@@ -112,7 +112,7 @@ Point *point_sphere(double r, int npar, int nmer) {
   Point *ps = (Point *)malloc(sizeof(Point) * npar * nmer);
 
   for (int j = 0; j < npar; j++) {
-    double alpha = ((2 * M_PI) / npar) * j + M_PI;
+    double alpha = ((M_PI) / npar) * j + M_PI;
     Point p;
     p.x = 0; p.y = r; p.z = 0;
     point_rot_z(&p, alpha);
