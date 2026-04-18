@@ -25,7 +25,7 @@ void draw_sphere(Display *display, Window window, GC gc, double r, int npar, int
   int nsegs = sphere_nsegs(npar, nmer);
   Segment *segs = sphere(r, npar, nmer);
   segs_rot_y(segs, nsegs, rot_y);
-  segs_rot_x(segs, nsegs, 0.8);
+  segs_rot_x(segs, nsegs, -0.8);
   draw_segs(display, window, gc, segs, nsegs);
 }
 
@@ -33,7 +33,7 @@ void draw_torus(Display *display, Window window, GC gc, double r, double t, int 
   int nsegs = torus_nsegs(npar, nmer);
   Segment *segs = torus(r, t, npar, nmer);
   segs_rot_y(segs, nsegs, rot_y);
-  segs_rot_x(segs, nsegs, 0.2);
+  segs_rot_x(segs, nsegs, -0.4);
   draw_segs(display, window, gc, segs, nsegs);
 }
 

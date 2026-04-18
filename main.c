@@ -1,12 +1,10 @@
+#include<stdio.h>
 #include<unistd.h>
 #include<X11/Xlib.h>
 #include<X11/extensions/Xdbe.h>
 #include"geo.h"
 #include"xlib.h"
-
-#define SPHERE 1
-#define TORUS 2
-#define SURFACE 3
+#include"state.h"
 
 Display *display;
 Window window;
@@ -14,46 +12,108 @@ XdbeBackBuffer back_buffer;
 GC gc;
 XEvent event;
 
-// Sphere
-double sphere_radius = 100;
-int sphere_npar = 20;
-int sphere_nmer = 10;
-double sphere_rot_y = 0;
-
-// Torus
-double torus_radius = 100;
-double torus_thickness = 40;
-int torus_npar = 20;
-int torus_nmer = 10;
-double torus_rot_y = 0;
-
-// Surface
-double surface_width = 300;
-double surface_height = 300;
-int surface_columns = 60;
-int surface_rows = 60;
-double surface_origin_x = 0;
-double surface_origin_y = 0;
-double surface_phase = 0;
-double surface_scale_h = 10;
-double surface_scale_l = 50;
-
-void draw(int state) {
-  switch (state) {
+void draw(State state) {
+  switch (state.type) {
   case SPHERE:
-    draw_sphere(display, back_buffer, gc,
-		sphere_radius, sphere_npar, sphere_nmer, sphere_rot_y);
+    draw_sphere(display,
+		back_buffer,
+		gc,
+		state.sphere.radius,
+		state.sphere.npar,
+		state.sphere.nmer,
+		state.sphere.rot_y);
     break;
   case TORUS:
-    draw_torus(display, back_buffer, gc,
-	       torus_radius, torus_thickness, torus_npar, torus_nmer, torus_rot_y);
+    draw_torus(display,
+	       back_buffer,
+	       gc,
+	       state.torus.radius,
+	       state.torus.thickness,
+	       state.torus.npar,
+	       state.torus.nmer,
+	       state.torus.rot_y);
     break;
   case SURFACE:
-    draw_surface(display, back_buffer, gc,
-		 surface_width, surface_height, surface_columns, surface_rows,
-		 surface_origin_x, surface_origin_y, surface_phase, surface_scale_h, surface_scale_l);
+    draw_surface(display,
+		 back_buffer,
+		 gc,
+		 state.surface.width,
+		 state.surface.height,
+		 state.surface.columns,
+		 state.surface.rows,
+		 state.surface.origin_x,
+		 state.surface.origin_y,
+		 state.surface.phase,
+		 state.surface.scale_h,
+		 state.surface.scale_l);
     break;
   }
+}
+
+void alter(State *state, int keycode) {
+  if (keycode == 0x18) { // q
+    state->type = SPHERE;
+  } else if (keycode == 0x19) { // w
+    state->type = TORUS;
+  } else if (keycode == 0x1a) { // e
+    state->type = SURFACE;
+  } else if (keycode == 0x26) { // a
+    switch (state->type) {
+    case SPHERE:
+      state->sphere.npar += 1;
+      break;
+    case TORUS:
+      state->torus.npar += 1;
+      break;
+    case SURFACE:
+      state->surface.rows += 1;
+      break;
+    }
+  } else if (keycode == 0x34) { // z
+    switch (state->type) {
+    case SPHERE:
+      state->sphere.npar -= 1;
+      break;
+    case TORUS:
+      state->torus.npar -= 1;
+      break;
+    case SURFACE:
+      state->surface.rows -= 1;
+      break;
+    }
+  } else if (keycode == 0x27) { // s
+    switch (state->type) {
+    case SPHERE:
+      state->sphere.nmer += 1;
+      break;
+    case TORUS:
+      state->torus.nmer += 1;
+      break;
+    case SURFACE:
+      state->surface.columns += 1;
+      break;
+    }
+  } else if (keycode == 0x35) { // x
+    switch (state->type) {
+    case SPHERE:
+      state->sphere.nmer -= 1;
+      break;
+    case TORUS:
+      state->torus.nmer -= 1;
+      break;
+    case SURFACE:
+      state->surface.columns -= 1;
+      break;
+    }
+  }
+}
+
+Bool has_key_event(Display *display, XEvent *event, XPointer arg) {
+    if (event->type == KeyPress) {
+        printf("KeyPress: %x\n", event->xkey.keycode);
+        return True;
+    }
+    return False;
 }
 
 int main() {
@@ -69,22 +129,26 @@ int main() {
 
   XSetForeground(display, gc, BlackPixel(display, 0));
 
-  /* for(;;) { */
-  /*   XNextEvent(display, &event); */
-  /*   if (event.type == MapNotify) */
-  /*     break; */
-  /* } */
+  State state = init_state();
 
-  int state = SURFACE;
   double ty = 0;
+
   for(;;) {
     XSetForeground(display, gc, WhitePixel(display, 0));
     draw(state);
 
+    if (XCheckIfEvent(display, &event, has_key_event, (XPointer)NULL)) {
+      if (event.xkey.keycode == 0x09) {
+	break;
+      } else {
+	alter(&state, event.xkey.keycode);
+      }
+    }
+
     ty = ty + 0.01;
-    sphere_rot_y = ty;
-    torus_rot_y = ty;
-    surface_phase = ty;
+    state.sphere.rot_y = ty;
+    state.torus.rot_y = ty;
+    state.surface.phase = - ty * 10;
 
     XSetForeground(display, gc, BlackPixel(display, 0));
     draw(state);
